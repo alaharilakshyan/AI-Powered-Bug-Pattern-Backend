@@ -1,0 +1,137 @@
+# Implementation Plan: BugGraph Window Utility Tool (GUI Popup Workstation)
+
+Transform BugGraph so that when `buggraph` (or `buggraph pop`) is entered, it launches a dedicated **Window Utility Tool** outside the terminal. The popup window will display the full BugGraph banner, connection status, and all interactive debugging tools in a rich, modern desktop utility interface.
+
+---
+
+## 🎯 Architecture Overview
+
+```mermaid
+flowchart TD
+    A[Developer enters: buggraph or buggraph pop] --> B[CLI Entry Point: bin/buggraph.js]
+    B --> C[Window Utility Launcher & Local Server]
+    C -->|Spawns background server on 127.0.0.1:4567| D[Built-in HTTP Workstation Server]
+    C -->|Launches standalone desktop window via --app mode| E[Native Desktop Window Utility]
+    
+    subgraph Window Utility GUI
+        E --> F[Header: Glowing Neon BugGraph Banner & Status Badge]
+        E --> G[Tool Navigation Tabs]
+        G --> H1[🔍 AI Error Solver]
+        G --> H2[📖 Error Explainer]
+        G --> H3[🛠️ Code Fix Patch]
+        G --> H4[🐞 Interactive AI Debugger Chat]
+        G --> H5[📥 Bug Ingestion Ledger]
+        G --> H6[⚙️ Settings & Endpoint Config]
+    end
+
+    subgraph Internal Engine Bridge
+        D -->|Delegates to existing API logic| I[src/api.js & src/config.js]
+        I -->|Live Server or Standalone Fallback| J[BugGraph Knowledge Graph Engine]
+    end
+```
+
+---
+
+## 🖥️ How the Window Utility Works
+
+1. **Standalone Window Utility Mode**:
+   - Uses Microsoft Edge / Chrome in `--app=http://127.0.0.1:4567 --window-size=1150,820` mode.
+   - Strips away all browser toolbars, tabs, URL bars, and bookmarks.
+   - Opens as a dedicated, sleek floating desktop utility window with native Windows controls, responsive sizing, and its own title bar.
+   - Graceful fallback to default system browser opener if app mode is unavailable.
+
+2. **CLI & Terminal Experience**:
+   - Entering `buggraph` or `npm start` will:
+     1. Display the clean terminal banner.
+     2. Automatically start the local workstation server and pop open the desktop window utility.
+     3. Keep the terminal running with a live log of actions and a graceful `Ctrl+C` shutdown.
+   - Passing `buggraph --cli` or specific commands (e.g. `buggraph solve --file log.txt`, `buggraph status`) will continue running in standard terminal mode.
+   - A dedicated command `buggraph pop` is also provided.
+
+3. **Rich Web UI & Aesthetics**:
+   - Modern dark mode palette (`#0a0e17`, `#111827`, `#1e293b`) with neon cyan (`#00f0ff`) and purple/magenta accents.
+   - Glassmorphic panels, glowing status badges, and typography using Google Fonts (Outfit & JetBrains Mono / Fira Code).
+   - Instant sample error presets (e.g., "React TypeError", "SQL Injection", "Async Timeout") for 1-click testing.
+   - 1-click "Copy Code Fix" buttons with visual feedback.
+   - Multi-turn interactive AI chat with bubble formatting and context retention.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Window Launch Behavior**: By default, entering `buggraph` (or `npm start`) will pop open the Window Utility Tool outside the terminal, while also printing status in the terminal. If you want the interactive terminal menu instead, you can run `buggraph --cli`.
+
+---
+
+## Proposed Changes
+
+### Component 1: Window Utility Server & Launcher
+#### [NEW] [src/ui/server.js](file:///c:/VOLUME%20D/AI-Powered-Bug-Pattern-Backend/src/ui/server.js)
+- Lightweight, zero-dependency Node.js HTTP server (built with standard `http` module).
+- Serves the frontend static files and provides local JSON API endpoints:
+  - `GET /api/status`
+  - `POST /api/solve`
+  - `POST /api/explain`
+  - `POST /api/fix`
+  - `POST /api/session`
+  - `POST /api/log`
+  - `GET /api/config`
+  - `POST /api/config`
+- Reuses all existing logic in [`src/api.js`](file:///c:/VOLUME%20D/AI-Powered-Bug-Pattern-Backend/src/api.js) and [`src/config.js`](file:///c:/VOLUME%20D/AI-Powered-Bug-Pattern-Backend/src/config.js) directly (both live backend & standalone local fallback).
+
+#### [NEW] [src/ui/launcher.js](file:///c:/VOLUME%20D/AI-Powered-Bug-Pattern-Backend/src/ui/launcher.js)
+- Detects Windows Microsoft Edge and Google Chrome installations.
+- Spawns the window in standalone utility mode (`--app=http://127.0.0.1:<port>`).
+- Cross-platform support (fallback to `start` on Windows, `open` on macOS, `xdg-open` on Linux).
+
+---
+
+### Component 2: Modern Window Utility GUI
+#### [NEW] [src/ui/public/index.html](file:///c:/VOLUME%20D/AI-Powered-Bug-Pattern-Backend/src/ui/public/index.html)
+- Main application shell:
+  - Glowing BugGraph banner header with version and connection status pill.
+  - Tabbed navigation bar with icons for all 6 core tools.
+  - Interactive tool workspaces:
+    - **AI Error Solver**: Input textarea, language/framework selectors, quick sample presets, structured diagnosis cards, root cause analysis, solution box, O(N) complexity badges.
+    - **Error Explainer**: Plain-English translation cards, "What this means", "Likely cause", key concept badges, recommended action steps.
+    - **Code Fix Generator**: Side-by-side / unified diff patch viewer, 1-click copy patch button, side effects & security notes.
+    - **Interactive AI Debugger**: Conversational chat interface with message bubbles, thinking spinner, context reset, and prompt suggestions.
+    - **Bug Ingestion Ledger**: Form to submit bug reports directly to central BugGraph ledger.
+    - **Settings & Config**: API Endpoint, Token management, connection test button.
+
+#### [NEW] [src/ui/public/styles.css](file:///c:/VOLUME%20D/AI-Powered-Bug-Pattern-Backend/src/ui/public/styles.css)
+- Sleek cyber-developer dark theme with glassmorphism, glowing borders, smooth tab transitions, modern buttons, syntax/diff highlights, and responsive layouts.
+
+#### [NEW] [src/ui/public/app.js](file:///c:/VOLUME%20D/AI-Powered-Bug-Pattern-Backend/src/ui/public/app.js)
+- Client-side logic: tab switching, API requests, dynamic rendering of cards/diffs, chat streaming simulation, copy-to-clipboard helpers, and toast notifications.
+
+---
+
+### Component 3: CLI Entry Point Updates
+#### [MODIFY] [bin/buggraph.js](file:///c:/VOLUME%20D/AI-Powered-Bug-Pattern-Backend/bin/buggraph.js)
+- Add `buggraph pop` command to explicitly launch the window utility.
+- Update the default entrypoint when `buggraph` (or `npm start`) is entered:
+  - If no subcommand or `--cli` flag is provided, launch the Window Utility Tool popup immediately.
+  - Add `--cli` option to allow developers to force the terminal-only menu when desired.
+  - In `runInteractiveMenu()`, add a `🖥️  Launch Window Utility Tool` choice so terminal users can pop the window at any time.
+
+---
+
+## 🧪 Verification Plan
+
+### Automated Tests
+- Run `npm test` to verify existing tests (formatter, sanitizer, config) continue to pass.
+- Add unit tests for the server endpoints (`tests/server.test.js`) to verify `/api/status`, `/api/solve`, `/api/explain`, `/api/fix` return expected payloads.
+
+### Manual Verification
+1. Run `npm start` in the terminal:
+   - Confirm that the terminal prints the startup banner and status message.
+   - Confirm that a dedicated standalone desktop window pops up immediately outside the terminal.
+2. In the popup window:
+   - Test **AI Error Solver** using the sample error button -> Verify structured diagnosis, code fix box, and O(N) complexity badges render.
+   - Test **Error Explainer** -> Verify plain-English summary, concepts, and steps render.
+   - Test **Code Fix Patch** -> Verify code diff renders with 1-click copy.
+   - Test **Interactive Debugger** -> Send multi-turn messages, verify AI replies and maintains context.
+   - Test **Settings** -> View active configuration and test backend connection.
+3. Test `buggraph --cli` -> Verify pure terminal menu remains fully functional.

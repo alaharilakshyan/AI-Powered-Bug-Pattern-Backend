@@ -1,0 +1,33 @@
+{
+  "name": "buggraph-cli",
+  "version": "1.0.0",
+  "description": "AI-Powered Bug-Pattern Knowledge Graph CLI Workstation & Debugging Extension",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "buggraph": "./bin/buggraph.js"
+  },
+  "scripts": {
+    "start": "node bin/buggraph.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "keywords": [
+    "buggraph",
+    "cli",
+    "ai-debugging",
+    "knowledge-graph",
+    "stacktrace",
+    "error-solver"
+  ],
+  "author": "BugGraph Team",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "boxen": "^7.1.1",
+    "chalk": "^5.4.1",
+    "commander": "^12.1.0",
+    "conf": "^12.0.0",
+    "inquirer": "^9.3.7",
+    "ora": "^8.1.1"
+  }
+}

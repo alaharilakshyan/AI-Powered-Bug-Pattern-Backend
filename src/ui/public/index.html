@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BugGraph AI Workstation — Window Utility</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="window-container">
+    <!-- TOP UTILITY HEADER WITH BUGGRAPH BANNER -->
+    <header class="app-header">
+      <div class="header-main">
+        <div class="brand-group">
+          <div class="logo-badge">
+            <span class="logo-icon">🤖</span>
+            <div class="logo-pulse"></div>
+          </div>
+          <div class="brand-text">
+            <div class="brand-title-row">
+              <h1 class="brand-title">BUGGRAPH</h1>
+              <span class="version-badge">v1.0.0</span>
+              <span class="window-utility-tag">WINDOW UTILITY TOOL</span>
+            </div>
+            <p class="brand-subtitle">AI-Powered Bug-Pattern Knowledge Graph Workstation</p>
+            <p class="brand-caption">Real-time Log Piping • Stack Trace Analysis • Automated Fix Patching</p>
+          </div>
+        </div>
+
+        <div class="status-bar-group">
+          <div id="connectionPill" class="status-pill checking">
+            <span class="status-dot"></span>
+            <span id="connectionText" class="status-text">Checking Engine...</span>
+          </div>
+          <button id="refreshStatusBtn" class="icon-action-btn" title="Refresh Engine Status">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- WORKSTATION TOOL NAVIGATION TABS -->
+      <nav class="tool-nav">
+        <button class="nav-tab active" data-tab="solve" id="tabSolve">
+          <span class="nav-icon">🔍</span>
+          <span class="nav-label">AI Error Solver</span>
+          <span class="nav-sub">Root Cause & O(N)</span>
+        </button>
+        <button class="nav-tab" data-tab="explain" id="tabExplain">
+          <span class="nav-icon">📖</span>
+          <span class="nav-label">Error Explainer</span>
+          <span class="nav-sub">Plain English</span>
+        </button>
+        <button class="nav-tab" data-tab="fix" id="tabFix">
+          <span class="nav-icon">🛠️</span>
+          <span class="nav-label">Code Fix Patch</span>
+          <span class="nav-sub">Diffs & Safety</span>
+        </button>
+        <button class="nav-tab" data-tab="debug" id="tabDebug">
+          <span class="nav-icon">🐞</span>
+          <span class="nav-label">AI Debug Session</span>
+          <span class="nav-sub">Multi-turn Chat</span>
+        </button>
+        <button class="nav-tab" data-tab="log" id="tabLog">
+          <span class="nav-icon">📥</span>
+          <span class="nav-label">Ingest Bug Log</span>
+          <span class="nav-sub">Ledger Storage</span>
+        </button>
+        <button class="nav-tab" data-tab="settings" id="tabSettings">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-label">Settings & Config</span>
+          <span class="nav-sub">Endpoint & Auth</span>
+        </button>
+      </nav>
+    </header>
+
+    <!-- MAIN WORKSPACE CONTENT -->
+    <main class="workspace">
+      <!-- 1. AI ERROR SOLVER TAB -->
+      <section id="panelSolve" class="tab-panel active">
+        <div class="panel-layout">
+          <div class="input-column">
+            <div class="card glass-card">
+              <div class="card-header">
+                <div class="card-title">
+                  <span class="card-icon">⚡</span>
+                  <h3>Error Trace Input</h3>
+                </div>
+                <div class="presets-row">
+                  <span class="preset-label">Quick Presets:</span>
+                  <button class="preset-chip" data-preset="typeerror">TypeError</button>
+                  <button class="preset-chip" data-preset="sqli">SQL Injection</button>
+                  <button class="preset-chip" data-preset="reference">ReferenceError</button>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group flex-1">
+                  <label for="solveLanguage">Language</label>
+                  <select id="solveLanguage" class="custom-select">
+                    <option value="auto">Auto Detect</option>
+                    <option value="javascript">JavaScript / TypeScript</option>
+                    <option value="python">Python</option>
+                    <option value="java">Java</option>
+                    <option value="go">Go</option>
+                    <option value="rust">Rust</option>
+                  </select>
+                </div>
+                <div class="form-group flex-1">
+                  <label for="solveFramework">Framework / Context</label>
+                  <select id="solveFramework" class="custom-select">
+                    <option value="auto">Auto Detect</option>
+                    <option value="react">React / Next.js</option>
+                    <option value="node">Node.js / Express</option>
+                    <option value="django">Django / FastAPI</option>
+                    <option value="spring">Spring Boot</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="label-row">
+                  <label for="solveTraceInput">Stack Trace or Compiler Log</label>
+                  <span class="hint-text">Ctrl + Enter to solve</span>
+                </div>
+                <textarea id="solveTraceInput" class="code-textarea" placeholder="Paste your compiler error, runtime exception or stack trace here..." rows="8"></textarea>
+              </div>
+
+              <div class="action-footer">
+                <button id="clearSolveBtn" class="btn btn-secondary">Clear</button>
+                <button id="submitSolveBtn" class="btn btn-primary">
+                  <span class="btn-spinner" hidden></span>
+                  <span class="btn-text">🔍 Analyze & Solve Error</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="output-column">
+            <div id="solvePlaceholder" class="empty-state">
+              <div class="empty-icon">💡</div>
+              <h4>No Error Diagnosed Yet</h4>
+              <p>Paste an error trace on the left and click <strong>Analyze & Solve Error</strong>, or select one of the Quick Presets above.</p>
+            </div>
+
+            <div id="solveResults" class="results-container" hidden>
+              <!-- Diagnosis Banner -->
+              <div class="diagnosis-banner">
+                <div class="diag-meta">
+                  <span id="solveErrorType" class="error-badge">TypeError</span>
+                  <span id="solveSeverity" class="severity-pill">HIGH</span>
+                  <span id="solveConfidence" class="confidence-pill">95% Confidence</span>
+                </div>
+                <h4 id="solveSummaryText" class="diag-summary"></h4>
+              </div>
+
+              <!-- Root Cause -->
+              <div class="card result-card">
+                <div class="result-header root-cause-header">
+                  <span class="card-icon">🎯</span>
+                  <h4>Root Cause Analysis</h4>
+                </div>
+                <p id="solveRootCauseText" class="result-body-text"></p>
+                <div class="pattern-tags-container">
+                  <span class="pattern-label">Knowledge Graph Patterns:</span>
+                  <div id="solvePatternsList" class="pattern-tags-row"></div>
+                </div>
+              </div>
+
+              <!-- Recommended Fix -->
+              <div class="card result-card fix-card">
+                <div class="result-header fix-header">
+                  <div class="title-with-icon">
+                    <span class="card-icon">🛠️</span>
+                    <h4>Recommended Code Fix</h4>
+                  </div>
+                  <button id="copySolveFixBtn" class="copy-btn">
+                    <span>Copy Code Fix</span>
+                  </button>
+                </div>
+                <p id="solveFixDesc" class="fix-description"></p>
+                <pre class="code-box"><code id="solveFixCode"></code></pre>
+              </div>
+
+              <!-- Complexity & Optimization Scorecard -->
+              <div class="card result-card opt-card">
+                <div class="result-header opt-header">
+                  <span class="card-icon">⚡</span>
+                  <h4>Optimization & Runtime Invariants</h4>
+                </div>
+                <div class="opt-grid">
+                  <div class="opt-item">
+                    <span class="opt-label">Complexity</span>
+                    <span id="solveOptComplexity" class="opt-value cyan">O(1)</span>
+                  </div>
+                  <div class="opt-item">
+                    <span class="opt-label">Performance</span>
+                    <span id="solveOptPerf" class="opt-value">Prevents crash loop</span>
+                  </div>
+                  <div class="opt-item">
+                    <span class="opt-label">Security</span>
+                    <span id="solveOptSec" class="opt-value">Guarded bounds</span>
+                  </div>
+                  <div class="opt-item">
+                    <span class="opt-label">Safety</span>
+                    <span id="solveOptMaint" class="opt-value">Standard Hook Pattern</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. ERROR EXPLAINER TAB -->
+      <section id="panelExplain" class="tab-panel">
+        <div class="panel-layout">
+          <div class="input-column">
+            <div class="card glass-card">
+              <div class="card-header">
+                <div class="card-title">
+                  <span class="card-icon">📖</span>
+                  <h3>Error Explainer</h3>
+                </div>
+                <span class="tag-pill">Educational Breakdown</span>
+              </div>
+              <p class="panel-desc">Translate complex compiler logs and cryptic runtime traces into clear, developer-friendly technical explanations.</p>
+
+              <div class="form-group">
+                <div class="label-row">
+                  <label for="explainInput">Compiler / Runtime Error Message</label>
+                  <button class="small-link-btn" id="explainPresetBtn">Load Sample</button>
+                </div>
+                <textarea id="explainInput" class="code-textarea" placeholder="Paste the compiler or runtime error message you want explained..." rows="9"></textarea>
+              </div>
+
+              <div class="action-footer">
+                <button id="clearExplainBtn" class="btn btn-secondary">Clear</button>
+                <button id="submitExplainBtn" class="btn btn-primary">
+                  <span class="btn-spinner" hidden></span>
+                  <span class="btn-text">📖 Explain Error</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="output-column">
+            <div id="explainPlaceholder" class="empty-state">
+              <div class="empty-icon">🧠</div>
+              <h4>Understand Any Compiler Error</h4>
+              <p>Paste any cryptic trace or stack dump on the left to receive a plain-English explanation, underlying architectural concepts, and guided next steps.</p>
+            </div>
+
+            <div id="explainResults" class="results-container" hidden>
+              <div class="card result-card explain-summary-card">
+                <div class="result-header">
+                  <span class="card-icon">💡</span>
+                  <h4>Summary</h4>
+                </div>
+                <p id="explainSummaryText" class="result-body-text"></p>
+              </div>
+
+              <div class="card result-card">
+                <div class="result-header">
+                  <span class="card-icon">🧠</span>
+                  <h4>What This Means</h4>
+                </div>
+                <p id="explainMeaningText" class="result-body-text"></p>
+              </div>
+
+              <div class="card result-card">
+                <div class="result-header">
+                  <span class="card-icon">📍</span>
+                  <h4>Likely Cause</h4>
+                </div>
+                <p id="explainLikelyCauseText" class="result-body-text"></p>
+              </div>
+
+              <div class="card result-card">
+                <div class="result-header">
+                  <span class="card-icon">🔑</span>
+                  <h4>Core Concepts to Understand</h4>
+                </div>
+                <div id="explainConceptsList" class="concept-tags-row"></div>
+              </div>
+
+              <div class="card result-card">
+                <div class="result-header">
+                  <span class="card-icon">🚀</span>
+                  <h4>Recommended Next Steps</h4>
+                </div>
+                <ol id="explainStepsList" class="steps-ordered-list"></ol>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. CODE FIX PATCH GENERATOR TAB -->
+      <section id="panelFix" class="tab-panel">
+        <div class="panel-layout">
+          <div class="input-column">
+            <div class="card glass-card">
+              <div class="card-header">
+                <div class="card-title">
+                  <span class="card-icon">🛠️</span>
+                  <h3>Patch Generator</h3>
+                </div>
+                <span class="tag-pill">Unified Code Diff</span>
+              </div>
+              <p class="panel-desc">Generate production-grade code patches complete with unified diffs, side-effect safety checks, and architectural review.</p>
+
+              <div class="form-group">
+                <div class="label-row">
+                  <label for="fixInput">Defect Stack Trace or Bug Context</label>
+                  <button class="small-link-btn" id="fixPresetBtn">Load Sample</button>
+                </div>
+                <textarea id="fixInput" class="code-textarea" placeholder="Paste bug trace or defective code snippet here..." rows="9"></textarea>
+              </div>
+
+              <div class="action-footer">
+                <button id="clearFixBtn" class="btn btn-secondary">Clear</button>
+                <button id="submitFixBtn" class="btn btn-primary">
+                  <span class="btn-spinner" hidden></span>
+                  <span class="btn-text">🛠️ Generate Code Fix</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="output-column">
+            <div id="fixPlaceholder" class="empty-state">
+              <div class="empty-icon">📝</div>
+              <h4>Production Code Patch</h4>
+              <p>Submit an error trace to generate a safe, drop-in replacement patch with diff formatting and side-effect warnings.</p>
+            </div>
+
+            <div id="fixResults" class="results-container" hidden>
+              <!-- Code Diff Card -->
+              <div class="card result-card diff-card">
+                <div class="result-header">
+                  <div class="title-with-icon">
+                    <span class="card-icon">📝</span>
+                    <h4>Unified Code Diff Patch</h4>
+                  </div>
+                  <button id="copyFixDiffBtn" class="copy-btn">
+                    <span>Copy Diff Patch</span>
+                  </button>
+                </div>
+                <div id="fixDiffViewer" class="diff-viewer"></div>
+              </div>
+
+              <!-- Why It Works -->
+              <div class="card result-card">
+                <div class="result-header">
+                  <span class="card-icon">💡</span>
+                  <h4>Why This Fix Works</h4>
+                </div>
+                <p id="fixExplanationText" class="result-body-text"></p>
+              </div>
+
+              <!-- Side Effects & Security -->
+              <div class="card result-card warning-card">
+                <div class="result-header">
+                  <span class="card-icon">⚠️</span>
+                  <h4>Side Effects & Security Considerations</h4>
+                </div>
+                <p id="fixSideEffectsText" class="result-body-text"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. INTERACTIVE AI DEBUGGER TAB -->
+      <section id="panelDebug" class="tab-panel">
+        <div class="chat-workspace">
+          <div class="chat-sidebar">
+            <div class="card glass-card sidebar-card">
+              <div class="card-header">
+                <h4>Session Context</h4>
+                <button id="newSessionBtn" class="btn btn-xs btn-outline">New Session</button>
+              </div>
+              <div class="session-meta">
+                <span class="meta-label">Session ID:</span>
+                <span id="activeSessionIdText" class="meta-val">New Session</span>
+              </div>
+              <div class="prompt-suggestions">
+                <span class="suggestions-label">Suggested Prompts:</span>
+                <button class="suggestion-chip">Why is my React state null?</button>
+                <button class="suggestion-chip">How do I fix ECONNREFUSED?</button>
+                <button class="suggestion-chip">Is this SQL query vulnerable to injection?</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-main">
+            <div class="chat-history" id="chatHistory">
+              <div class="chat-bubble ai-bubble">
+                <div class="bubble-header">
+                  <span class="bot-icon">🤖</span>
+                  <span class="bot-name">BugGraph AI Debugger</span>
+                  <span class="bubble-time">Just now</span>
+                </div>
+                <div class="bubble-content">
+                  Hello! I'm connected to the BugGraph Knowledge Graph. Paste a stack trace, compiler error, or code snippet below to start our interactive debugging session.
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-input-bar">
+              <textarea id="chatInput" class="chat-textarea" placeholder="Type your debugging question or paste code here... (Enter to send, Shift+Enter for newline)" rows="2"></textarea>
+              <button id="sendChatBtn" class="btn btn-primary send-btn">
+                <span>Send</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. INGEST BUG LOG TAB -->
+      <section id="panelLog" class="tab-panel">
+        <div class="form-page-layout">
+          <div class="card glass-card form-card">
+            <div class="card-header">
+              <div class="card-title">
+                <span class="card-icon">📥</span>
+                <h3>Ingest Bug Report into Knowledge Graph</h3>
+              </div>
+              <span class="tag-pill">Central Bug Ledger</span>
+            </div>
+            <p class="panel-desc">Store error traces, incident metadata, and component tags in the BugGraph ledger to enrich historical pattern detection.</p>
+
+            <form id="ingestBugForm">
+              <div class="form-row">
+                <div class="form-group flex-2">
+                  <label for="bugTitle">Bug Title *</label>
+                  <input type="text" id="bugTitle" class="custom-input" placeholder="e.g. TypeError in UserList component when fetching /api/users" required>
+                </div>
+                <div class="form-group flex-1">
+                  <label for="bugSeverity">Severity</label>
+                  <select id="bugSeverity" class="custom-select">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group flex-1">
+                  <label for="bugComponent">Affected Component / Microservice</label>
+                  <input type="text" id="bugComponent" class="custom-input" placeholder="e.g. auth-service, frontend, payment-api" value="workstation">
+                </div>
+                <div class="form-group flex-1">
+                  <label for="bugTags">Tags (comma-separated)</label>
+                  <input type="text" id="bugTags" class="custom-input" placeholder="e.g. react, async, network, sqli">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="bugDesc">Description Summary</label>
+                <input type="text" id="bugDesc" class="custom-input" placeholder="Brief summary of failure conditions...">
+              </div>
+
+              <div class="form-group">
+                <label for="bugTrace">Stack Trace / Raw Log *</label>
+                <textarea id="bugTrace" class="code-textarea" placeholder="Paste full runtime stack trace here..." rows="6" required></textarea>
+              </div>
+
+              <div class="action-footer">
+                <button type="reset" class="btn btn-secondary">Reset</button>
+                <button type="submit" id="submitBugBtn" class="btn btn-primary">
+                  <span class="btn-spinner" hidden></span>
+                  <span class="btn-text">📥 Submit to BugGraph Ledger</span>
+                </button>
+              </div>
+            </form>
+
+            <div id="ingestSuccessCard" class="ingest-result-card" hidden>
+              <div class="ingest-success-header">
+                <span class="success-icon">✓</span>
+                <h4>Bug Successfully Recorded in Ledger</h4>
+              </div>
+              <p id="ingestSuccessMessage"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. SETTINGS & CONFIG TAB -->
+      <section id="panelSettings" class="tab-panel">
+        <div class="form-page-layout">
+          <div class="card glass-card form-card">
+            <div class="card-header">
+              <div class="card-title">
+                <span class="card-icon">⚙️</span>
+                <h3>Workstation Configuration & Authentication</h3>
+              </div>
+              <span class="tag-pill">~/.buggraph/config.json</span>
+            </div>
+
+            <form id="configForm">
+              <div class="form-group">
+                <label for="configEndpoint">BugGraph Backend API Endpoint</label>
+                <input type="url" id="configEndpoint" class="custom-input" placeholder="http://localhost:3000" value="http://localhost:3000">
+                <span class="field-help">Remote or local backend server hosting Neo4j knowledge graph & LLM diagnosis endpoints.</span>
+              </div>
+
+              <div class="form-group">
+                <label for="configToken">Developer Secret Bearer Token</label>
+                <input type="password" id="configToken" class="custom-input" placeholder="bg_live_...">
+                <span class="field-help">Your personal developer secret token. Leave empty to use standalone local engine mode.</span>
+              </div>
+
+              <div class="action-footer">
+                <button type="button" id="testConnBtn" class="btn btn-secondary">Test Connection</button>
+                <button type="submit" id="saveConfigBtn" class="btn btn-primary">Save Configuration</button>
+              </div>
+            </form>
+
+            <div class="info-box">
+              <h4>🛡️ Standalone Local Mode Support</h4>
+              <p>When operating without an active remote backend, BugGraph Workstation automatically switches into <strong>Standalone Local AI Engine</strong> mode. All analysis, O(N) complexity evaluation, plain-English explainer, and code fix generation operate locally without remote dependencies.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="toast-container"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
