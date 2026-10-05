@@ -1,0 +1,85 @@
+Here is a complete, well-organized template you can copy and paste directly into a `README.md` or `instructions.txt` file. It covers everything you built and gives your team the exact step-by-step instructions they need.
+
+---
+
+### 🧠 ML Bug Analyzer Engine - Integration Guide
+
+**Overview of What This Is:**
+This is the offline ML engine (`offline llm.py`). It takes error logs, code snippets, and database memory, analyzes them using a local AI model, categorizes the bug, provides a code fix, and outputs a hierarchical dependency tree. It runs 100% locally with zero API costs.
+
+---
+
+### 📦 1. What You Need to Install (Prerequisites)
+
+Because this runs offline, you must have the local AI engine installed on your machine before running the script.
+
+1. **Download Ollama:**
+* Go to [https://ollama.com/download](https://ollama.com/download) and install the Windows version.
+* Make sure the Ollama app is running in your background (look for the llama icon in your Windows taskbar tray).
+
+
+2. **Download the AI Model:**
+* Open your Command Prompt or PowerShell.
+* Run this exact command to download the AI brain (approx 2GB):
+```cmd
+ollama pull qwen2.5-coder:3b
+
+```
+
+
+* *(Note: If your laptop is struggling or slow, use `ollama pull qwen2.5-coder:1.5b` and update the `MODEL_NAME` variable at the top of the python script).*
+
+
+3. **Install Python Requirements:**
+* Open your terminal and install the `requests` library so the script can communicate with Ollama:
+```cmd
+py -m pip install requests
+
+```
+
+
+
+
+
+---
+
+### ⚙️ 2. How the Script Works (What I Built)
+
+* **The Core Function:** The main function is `analyze_bug(error_log, code_snippet, environment, past_memory)`.
+* **JSON Enforcement:** I engineered the prompt to force the AI to return **strict JSON only**. There is no chatty text.
+* **The Tree Logic:** The AI automatically figures out parent-child relationships for the errors and outputs `tree_nodes` with `id` and `parent` tags. This is ready for the Frontend team to use for their graphical tree UI.
+* **Error Handling built-in:** The script catches if Ollama isn't running or if the model isn't downloaded, and returns a safe JSON error so the app doesn't crash.
+
+---
+
+### 🚀 3. How to Run / Integrate (For the Backend Team)
+
+**Option A: Test it in the terminal**
+You can run the file directly to see a demo of the ASCII graphic tree and JSON output:
+
+```cmd
+py "offline llm.py"
+
+```
+
+**Option B: Integrate it into your code**
+If you are writing the backend in Python, you can import my function directly into your files:
+
+```python
+from offline_llm import analyze_bug
+
+# Example integration:
+output_json = analyze_bug(
+    error_log="ReferenceError: loginUser is not defined",
+    code_snippet="<button onclick='loginUser()'>Login</button>",
+    environment="Vanilla JS",
+    past_memory={"found": False}
+)
+
+print(output_json["tree_nodes"]) 
+# Send this JSON directly to the Frontend team!
+
+```
+
+**Important Note for Integration:**
+The AI engine runs locally on `[http://127.0.0.1:11434/api/generate](http://127.0.0.1:11434/api/generate)`. Do not change this port unless you also reconfigure the Ollama desktop app.
