@@ -191,6 +191,48 @@ function handleMockOrApiError(err, type, payload) {
       patterns = ['Network Timeout / Unreachable Host', 'CORS Policy Block'];
     }
 
+    const fixDiff = isTypeError 
+      ? `@@ -12,3 +12,4 @@\n-const value = data.property;\n+const value = data?.property ?? defaultFallback;`
+      : isSqlError
+      ? `@@ -45,2 +45,2 @@\n-const q = "SELECT * FROM users WHERE name = '" + name + "'";\n+const q = { text: 'SELECT * FROM users WHERE name = $1', values: [name] };`
+      : `@@ -1,3 +1,5 @@\n-await executeTargetOperation();\n+try {\n+  await executeTargetOperation();\n+} catch (err) {\n+  console.error("Guarded execution error:", err);\n+}`;
+
+    const meaning = isTypeError 
+      ? 'The JavaScript runtime attempted to access a property or method on an uninitialized reference (null or undefined).'
+      : isSqlError
+      ? 'Database query was constructed via unescaped string concatenation, creating a severe injection vulnerability.'
+      : 'An operation was attempted on an invalid reference or unhandled runtime frame.';
+
+    const likelyCause = isTypeError 
+      ? 'Component rendered before asynchronous API fetch resolved, or state initialized without default value.'
+      : isSqlError
+      ? 'User input parameter was interpolated directly into SQL command without query parameterization.'
+      : 'Missing dependency import, variable scope mismatch, or network connection drop.';
+
+    const concepts = isTypeError
+      ? ['Optional Chaining (?.)', 'Nullish Coalescing (??)', 'Defensive Programming', 'Asynchronous Mount Invariant']
+      : isSqlError
+      ? ['Parameterized Queries', 'Input Sanitization', 'SQL Injection Mitigation', 'Prepared Statements']
+      : ['Defensive Programming', 'Exception Guarding', 'Scope Isolation'];
+
+    const nextSteps = isTypeError
+      ? [
+          'Inspect the line referenced in the stack trace for uninitialized data access.',
+          'Verify that async promises or hooks complete before attempting to read nested properties.',
+          'Initialize state variables with sensible empty defaults (e.g. [] instead of undefined).'
+        ]
+      : isSqlError
+      ? [
+          'Refactor raw SQL strings to use parameterized query placeholders ($1, ?, etc.).',
+          'Audit all database query construction methods across the repository.',
+          'Add automated input validation tests to verify that malicious payload injection fails safely.'
+        ]
+      : [
+          'Inspect the stack trace frame to isolate the failing method invocation.',
+          'Wrap critical external calls in guarded try/catch blocks with fallback states.',
+          'Verify service availability and network timeout configurations.'
+        ];
+
     return {
       success: true,
       errorType,
@@ -202,13 +244,23 @@ function handleMockOrApiError(err, type, payload) {
       confidence: 0.95,
       relatedPatterns: patterns,
       solution: {
-        description: 'Apply defensive guard structures and scope sanitization.',
+        description: isTypeError ? 'Apply optional chaining and default empty initial state.' : 'Apply defensive guard structures and scope sanitization.',
         code: solutionCode
       },
+      fixDiff,
+      explanation: isTypeError 
+        ? 'Replaced direct unsafe property access with optional chaining (?.) and a nullish coalescing default fallback (??).'
+        : 'Replaced vulnerable string interpolation with a parameterized query object and safe binding placeholders.',
+      sideEffects: 'None. Safe fallback ensures application handles empty, loading, or unauthenticated states gracefully.',
+      considerations: 'Ensure caller component handles the loading or fallback state gracefully.',
+      meaning,
+      likelyCause,
+      concepts,
+      nextSteps,
       optimization: {
         performance: 'Eliminates application crashes and prevents unhandled process exits.',
         complexity: 'Time: O(N) | Space: O(1)',
-        security: 'Guards against parameter tampering and unhandled exception leakage.',
+        security: isSqlError ? 'Removes SQL Injection vector completely' : 'Guards against parameter tampering and unhandled exception leakage.',
         maintainability: 'Follows standard safe production coding practices.'
       },
       additionalContextRequired: false

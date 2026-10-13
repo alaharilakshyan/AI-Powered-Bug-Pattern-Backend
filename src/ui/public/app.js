@@ -1,10 +1,11 @@
 // ==========================================================================
 // BugGraph AI Workstation — Window Utility Client Logic
+// Architecture: Unified Investigation Workbench, Chat, Ledger, Settings
 // ==========================================================================
 
 const API_BASE = window.location.origin;
 
-// Sample Presets
+// Sample Presets for Quick Testing
 const PRESETS = {
   typeerror: `TypeError: Cannot read properties of undefined (reading 'map')
     at UserList (src/components/UserList.jsx:42:18)
@@ -25,23 +26,58 @@ const PRESETS = {
 };
 
 let currentActiveSessionId = null;
+let lastDiagnosedResult = null;
+let lastDiagnosedTrace = '';
 
 // ==========================================================================
-// TOAST SYSTEM
+// TOAST NOTIFICATIONS
 // ==========================================================================
 function showToast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  toast.innerHTML = `<span>${message}</span>`;
+  toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
   container.appendChild(toast);
 
   setTimeout(() => {
     toast.style.opacity = '0';
-    toast.style.transform = 'translateY(12px)';
-    toast.style.transition = 'all 0.3s ease';
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+    toast.style.transform = 'translateY(8px)';
+    toast.style.transition = 'all 0.2s ease';
+    setTimeout(() => toast.remove(), 200);
+  }, 2800);
+}
+
+// ==========================================================================
+// NAVIGATION SYSTEM
+// ==========================================================================
+function switchToTab(targetTab) {
+  const tabs = document.querySelectorAll('.nav-tab');
+  tabs.forEach(t => {
+    if (t.getAttribute('data-tab') === targetTab) {
+      t.classList.add('active');
+    } else {
+      t.classList.remove('active');
+    }
+  });
+
+  document.querySelectorAll('.tab-panel').forEach(panel => {
+    panel.classList.remove('active');
+  });
+
+  const activePanel = document.getElementById(`panel${targetTab.charAt(0).toUpperCase() + targetTab.slice(1)}`);
+  if (activePanel) {
+    activePanel.classList.add('active');
+  }
+}
+
+function initNavigation() {
+  const tabs = document.querySelectorAll('.nav-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const targetTab = tab.getAttribute('data-tab');
+      switchToTab(targetTab);
+    });
+  });
 }
 
 // ==========================================================================
@@ -60,14 +96,14 @@ async function fetchEngineStatus() {
 
     if (data.mode && data.mode.includes('Live')) {
       pill.className = 'status-pill online';
-      text.textContent = `● Connected Live (${data.endpoint})`;
+      text.textContent = `Live Backend (${data.endpoint})`;
     } else {
       pill.className = 'status-pill standalone';
-      text.textContent = `● Standalone Local AI Engine Active`;
+      text.textContent = `Standalone Local Engine`;
     }
   } catch (err) {
     pill.className = 'status-pill standalone';
-    text.textContent = `● Standalone Local Mode`;
+    text.textContent = `Standalone Local Mode`;
   }
 }
 
@@ -91,33 +127,7 @@ async function loadConfig() {
 }
 
 // ==========================================================================
-// TAB NAVIGATION
-// ==========================================================================
-function initNavigation() {
-  const tabs = document.querySelectorAll('.nav-tab');
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const targetTab = tab.getAttribute('data-tab');
-
-      // Update active tab button
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-
-      // Update active panel
-      document.querySelectorAll('.tab-panel').forEach(panel => {
-        panel.classList.remove('active');
-      });
-
-      const activePanel = document.getElementById(`panel${targetTab.charAt(0).toUpperCase() + targetTab.slice(1)}`);
-      if (activePanel) {
-        activePanel.classList.add('active');
-      }
-    });
-  });
-}
-
-// ==========================================================================
-// 1. AI ERROR SOLVER
+// 1. UNIFIED AI ERROR SOLVER
 // ==========================================================================
 function initSolveModule() {
   const traceInput = document.getElementById('solveTraceInput');
@@ -140,8 +150,11 @@ function initSolveModule() {
         } else if (presetKey === 'sqli') {
           langSelect.value = 'javascript';
           fwSelect.value = 'node';
+        } else if (presetKey === 'reference') {
+          langSelect.value = 'javascript';
+          fwSelect.value = 'node';
         }
-        showToast(`Loaded ${chip.textContent} preset!`);
+        showToast(`Loaded ${chip.textContent} preset`);
       }
     });
   });
@@ -150,6 +163,9 @@ function initSolveModule() {
     traceInput.value = '';
     placeholder.hidden = false;
     results.hidden = true;
+    lastDiagnosedResult = null;
+    lastDiagnosedTrace = '';
+    traceInput.focus();
   });
 
   // Ctrl + Enter shortcut
@@ -159,10 +175,30 @@ function initSolveModule() {
     }
   });
 
+  // View segment switcher (Root Cause | Code Fix & Diff | Plain Explainer)
+  const segmentBtns = document.querySelectorAll('.segment-btn');
+  segmentBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      segmentBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const view = btn.getAttribute('data-view');
+      document.querySelectorAll('.view-segment').forEach(seg => seg.classList.remove('active'));
+
+      if (view === 'rootcause') {
+        document.getElementById('viewRootCause').classList.add('active');
+      } else if (view === 'patch') {
+        document.getElementById('viewPatch').classList.add('active');
+      } else if (view === 'explainer') {
+        document.getElementById('viewExplainer').classList.add('active');
+      }
+    });
+  });
+
   submitBtn.addEventListener('click', async () => {
     const errorText = traceInput.value.trim();
     if (!errorText) {
-      showToast('Please paste a stack trace or compiler error first.', 'error');
+      showToast('Please paste a stack trace or error log first.', 'error');
       traceInput.focus();
       return;
     }
@@ -171,7 +207,7 @@ function initSolveModule() {
     const btnText = submitBtn.querySelector('.btn-text');
 
     spinner.hidden = false;
-    btnText.textContent = 'Analyzing Knowledge Graph...';
+    btnText.textContent = 'Analyzing Graph...';
     submitBtn.disabled = true;
 
     try {
@@ -187,47 +223,87 @@ function initSolveModule() {
       });
 
       const data = await res.json();
-      renderSolveResults(data);
+      lastDiagnosedResult = data;
+      lastDiagnosedTrace = errorText;
+
+      renderUnifiedSolveResults(data);
       placeholder.hidden = true;
       results.hidden = false;
-      showToast('AI Error Diagnosis complete!');
+      showToast('Error diagnosed successfully!');
     } catch (err) {
       showToast(`Solve error: ${err.message}`, 'error');
     } finally {
       spinner.hidden = true;
-      btnText.textContent = '🔍 Analyze & Solve Error';
+      btnText.textContent = 'Analyze & Solve Error';
       submitBtn.disabled = false;
     }
   });
 
-  // Copy code fix button
+  // Copy buttons
   document.getElementById('copySolveFixBtn').addEventListener('click', () => {
     const code = document.getElementById('solveFixCode').textContent;
-    navigator.clipboard.writeText(code).then(() => {
-      showToast('Code fix copied to clipboard!');
-    });
+    copyTextToClipboard(code, 'Code fix copied to clipboard!');
+  });
+
+  document.getElementById('copySolveCodeOnlyBtn').addEventListener('click', () => {
+    const code = document.getElementById('solveFixCode').textContent;
+    copyTextToClipboard(code, 'Code fix copied to clipboard!');
+  });
+
+  document.getElementById('copySolveDiffBtn').addEventListener('click', () => {
+    const diff = document.getElementById('solveDiffViewer').innerText;
+    copyTextToClipboard(diff, 'Diff patch copied to clipboard!');
+  });
+
+  // 1-Click: Escalate to Debug Chat
+  document.getElementById('escalateToChatBtn').addEventListener('click', () => {
+    if (!lastDiagnosedResult) return;
+    switchToTab('debug');
+
+    const chatInput = document.getElementById('chatInput');
+    const escalationPrompt = `I am debugging this error:\n\`\`\`\n${lastDiagnosedTrace}\n\`\`\`\nDiagnosis: ${lastDiagnosedResult.summary}\nRoot cause: ${lastDiagnosedResult.rootCause}\nCan you walk me through the fix step-by-step?`;
+    chatInput.value = escalationPrompt;
+    chatInput.focus();
+    showToast('Transferred error diagnosis into Debug Chat!');
+  });
+
+  // 1-Click: Ingest into BugGraph Ledger
+  document.getElementById('ingestFromSolveBtn').addEventListener('click', () => {
+    if (!lastDiagnosedResult) return;
+    switchToTab('log');
+
+    document.getElementById('bugTitle').value = `[${lastDiagnosedResult.errorType || 'Error'}] ${lastDiagnosedResult.summary || 'Incident'}`;
+    document.getElementById('bugSeverity').value = (lastDiagnosedResult.severity || 'medium').toLowerCase();
+    document.getElementById('bugComponent').value = lastDiagnosedResult.framework !== 'auto-detect' ? lastDiagnosedResult.framework : 'workstation';
+    document.getElementById('bugTags').value = (lastDiagnosedResult.relatedPatterns || []).join(', ');
+    document.getElementById('bugDesc').value = lastDiagnosedResult.rootCause || '';
+    document.getElementById('bugTrace').value = lastDiagnosedTrace;
+
+    showToast('Pre-filled bug report in Ledger form. Review and submit!');
   });
 }
 
-function renderSolveResults(data) {
+function renderUnifiedSolveResults(data) {
+  // Diagnosis Header
   document.getElementById('solveErrorType').textContent = data.errorType || 'Runtime Exception';
-  
+
   const sevEl = document.getElementById('solveSeverity');
-  sevEl.textContent = (data.severity || 'MEDIUM').toUpperCase();
-  if (data.severity === 'critical') {
-    sevEl.style.color = '#ef4444';
-  } else if (data.severity === 'high') {
-    sevEl.style.color = '#f97316';
-  } else {
-    sevEl.style.color = '#facc15';
-  }
+  const severity = (data.severity || 'medium').toLowerCase();
+  sevEl.className = `severity-pill ${severity}`;
+  sevEl.textContent = severity.toUpperCase();
 
   const confidencePct = Math.round((data.confidence || 0.95) * 100);
-  document.getElementById('solveConfidence').textContent = `${confidencePct}% Confidence`;
-  document.getElementById('solveSummaryText').textContent = data.summary || 'Compiler or runtime error detected.';
-  document.getElementById('solveRootCauseText').textContent = data.rootCause || 'Target payload failed runtime safety invariant.';
+  document.getElementById('solveConfidence').textContent = `${confidencePct}% Match`;
 
-  // Patterns
+  const lang = data.language && data.language !== 'auto-detect' ? data.language : 'General';
+  const fw = data.framework && data.framework !== 'auto-detect' ? data.framework : 'Standard Context';
+  document.getElementById('solveDetectedContext').textContent = `${lang} • ${fw}`;
+
+  document.getElementById('solveSummaryText').textContent = data.summary || 'Compiler or runtime error detected.';
+
+  // Segment 1: Root Cause & Complexity
+  document.getElementById('solveRootCauseText').textContent = data.rootCause || 'Target payload failed runtime invariant.';
+
   const patternsContainer = document.getElementById('solvePatternsList');
   patternsContainer.innerHTML = '';
   const patterns = data.relatedPatterns || ['Standard Defensive Guard'];
@@ -238,86 +314,47 @@ function renderSolveResults(data) {
     patternsContainer.appendChild(tag);
   });
 
-  // Solution
+  const opt = data.optimization || {};
+  document.getElementById('solveOptComplexity').textContent = opt.complexity || 'Time: O(N) | Space: O(1)';
+  document.getElementById('solveOptPerf').textContent = opt.performance || 'Prevents runtime crash';
+  document.getElementById('solveOptSec').textContent = opt.security || 'Guarded parameter validation';
+  document.getElementById('solveOptMaint').textContent = opt.maintainability || 'Production-grade safety pattern';
+
+  // Segment 2: Code Fix & Diff Patch
   const fixDesc = data.solution?.description || 'Apply defensive guard fix.';
   const fixCode = data.solution?.code || '// Safe replacement code';
   document.getElementById('solveFixDesc').textContent = fixDesc;
   document.getElementById('solveFixCode').textContent = fixCode;
 
-  // Optimization
-  const opt = data.optimization || {};
-  document.getElementById('solveOptComplexity').textContent = opt.complexity || 'Time: O(N) | Space: O(1)';
-  document.getElementById('solveOptPerf').textContent = opt.performance || 'Prevents runtime crashes';
-  document.getElementById('solveOptSec').textContent = opt.security || 'Guarded parameter validation';
-  document.getElementById('solveOptMaint').textContent = opt.maintainability || 'Production-grade safety pattern';
-}
-
-// ==========================================================================
-// 2. ERROR EXPLAINER
-// ==========================================================================
-function initExplainModule() {
-  const input = document.getElementById('explainInput');
-  const submitBtn = document.getElementById('submitExplainBtn');
-  const clearBtn = document.getElementById('clearExplainBtn');
-  const presetBtn = document.getElementById('explainPresetBtn');
-  const placeholder = document.getElementById('explainPlaceholder');
-  const results = document.getElementById('explainResults');
-
-  presetBtn.addEventListener('click', () => {
-    input.value = PRESETS.typeerror;
-    showToast('Loaded sample error!');
-  });
-
-  clearBtn.addEventListener('click', () => {
-    input.value = '';
-    placeholder.hidden = false;
-    results.hidden = true;
-  });
-
-  submitBtn.addEventListener('click', async () => {
-    const errorText = input.value.trim();
-    if (!errorText) {
-      showToast('Please paste an error message first.', 'error');
-      input.focus();
-      return;
+  // Render Diff
+  const diffViewer = document.getElementById('solveDiffViewer');
+  diffViewer.innerHTML = '';
+  const rawDiff = data.fixDiff || '@@ -1,1 +1,1 @@\n-const unsafe = target;\n+const safe = target ?? fallback;';
+  const lines = rawDiff.split('\n');
+  lines.forEach(line => {
+    const div = document.createElement('div');
+    div.className = 'diff-line';
+    if (line.startsWith('@@')) {
+      div.classList.add('header');
+    } else if (line.startsWith('+')) {
+      div.classList.add('add');
+    } else if (line.startsWith('-')) {
+      div.classList.add('del');
     }
-
-    const spinner = submitBtn.querySelector('.btn-spinner');
-    const btnText = submitBtn.querySelector('.btn-text');
-
-    spinner.hidden = false;
-    btnText.textContent = 'Generating explanation...';
-    submitBtn.disabled = true;
-
-    try {
-      const res = await fetch(`${API_BASE}/api/explain`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: errorText, message: errorText })
-      });
-
-      const data = await res.json();
-      renderExplainResults(data);
-      placeholder.hidden = true;
-      results.hidden = false;
-      showToast('Error explanation generated!');
-    } catch (err) {
-      showToast(`Explain error: ${err.message}`, 'error');
-    } finally {
-      spinner.hidden = true;
-      btnText.textContent = '📖 Explain Error';
-      submitBtn.disabled = false;
-    }
+    div.textContent = line;
+    diffViewer.appendChild(div);
   });
-}
 
-function renderExplainResults(data) {
-  document.getElementById('explainSummaryText').textContent = data.summary || data.meaning || 'Error explanation.';
-  document.getElementById('explainMeaningText').textContent = data.meaning || 'An operation was attempted on an invalid state reference.';
-  document.getElementById('explainLikelyCauseText').textContent = data.likelyCause || 'Asynchronous state or missing guard check.';
+  document.getElementById('solveFixExplanationText').textContent = data.explanation || 'Replaced direct execution with guarded nullish/parameterized check.';
+  const sideEffects = data.sideEffects || 'None detected.';
+  const considerations = data.considerations ? ` ${data.considerations}` : '';
+  document.getElementById('solveFixSideEffectsText').textContent = `Side Effects: ${sideEffects}${considerations}`;
 
-  // Concepts
-  const conceptsList = document.getElementById('explainConceptsList');
+  // Segment 3: Plain-English Explainer
+  document.getElementById('solveMeaningText').textContent = data.meaning || data.summary || 'An operation was attempted on an invalid state reference.';
+  document.getElementById('solveLikelyCauseText').textContent = data.likelyCause || 'Missing dependency, asynchronous timing mismatch, or parameter error.';
+
+  const conceptsList = document.getElementById('solveConceptsList');
   conceptsList.innerHTML = '';
   const concepts = data.concepts || ['Defensive Programming', 'Null Safety', 'Error Handling'];
   concepts.forEach(c => {
@@ -327,13 +364,12 @@ function renderExplainResults(data) {
     conceptsList.appendChild(chip);
   });
 
-  // Next steps
-  const stepsList = document.getElementById('explainStepsList');
+  const stepsList = document.getElementById('solveStepsList');
   stepsList.innerHTML = '';
   const steps = data.nextSteps || [
-    'Inspect the line referenced in stack trace for uninitialized values.',
-    'Add fallback defaults or optional chaining.',
-    'Verify that async promises resolve before rendering.'
+    'Inspect the line referenced in the stack trace for uninitialized data access.',
+    'Add fallback defaults or optional chaining to prevent unhandled rejections.',
+    'Verify asynchronous operations complete before accessing nested properties.'
   ];
   steps.forEach(s => {
     const li = document.createElement('li');
@@ -342,102 +378,16 @@ function renderExplainResults(data) {
   });
 }
 
-// ==========================================================================
-// 3. CODE FIX PATCH GENERATOR
-// ==========================================================================
-function initFixModule() {
-  const input = document.getElementById('fixInput');
-  const submitBtn = document.getElementById('submitFixBtn');
-  const clearBtn = document.getElementById('clearFixBtn');
-  const presetBtn = document.getElementById('fixPresetBtn');
-  const placeholder = document.getElementById('fixPlaceholder');
-  const results = document.getElementById('fixResults');
-
-  presetBtn.addEventListener('click', () => {
-    input.value = PRESETS.sqli;
-    showToast('Loaded sample defect!');
-  });
-
-  clearBtn.addEventListener('click', () => {
-    input.value = '';
-    placeholder.hidden = false;
-    results.hidden = true;
-  });
-
-  submitBtn.addEventListener('click', async () => {
-    const errorText = input.value.trim();
-    if (!errorText) {
-      showToast('Please paste a bug trace or code context first.', 'error');
-      input.focus();
-      return;
-    }
-
-    const spinner = submitBtn.querySelector('.btn-spinner');
-    const btnText = submitBtn.querySelector('.btn-text');
-
-    spinner.hidden = false;
-    btnText.textContent = 'Generating patch...';
-    submitBtn.disabled = true;
-
-    try {
-      const res = await fetch(`${API_BASE}/api/fix`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: errorText, stackTrace: errorText })
-      });
-
-      const data = await res.json();
-      renderFixResults(data);
-      placeholder.hidden = true;
-      results.hidden = false;
-      showToast('Code fix patch created!');
-    } catch (err) {
-      showToast(`Fix error: ${err.message}`, 'error');
-    } finally {
-      spinner.hidden = true;
-      btnText.textContent = '🛠️ Generate Code Fix';
-      submitBtn.disabled = false;
-    }
-  });
-
-  document.getElementById('copyFixDiffBtn').addEventListener('click', () => {
-    const diffText = document.getElementById('fixDiffViewer').innerText;
-    navigator.clipboard.writeText(diffText).then(() => {
-      showToast('Diff patch copied to clipboard!');
-    });
+function copyTextToClipboard(text, successToastMsg) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(successToastMsg);
+  }).catch(() => {
+    showToast('Failed to copy to clipboard', 'error');
   });
 }
 
-function renderFixResults(data) {
-  const diffViewer = document.getElementById('fixDiffViewer');
-  diffViewer.innerHTML = '';
-
-  const rawDiff = data.fixDiff || '@@ -1,1 +1,1 @@\n-const unsafe = input;\n+const safe = sanitize(input);';
-  const lines = rawDiff.split('\n');
-
-  lines.forEach(line => {
-    const div = document.createElement('div');
-    div.className = 'diff-line';
-    if (line.startsWith('@@')) {
-      div.classList.add('header');
-    } else if (line.startsWith('-')) {
-      div.classList.add('del');
-    } else if (line.startsWith('+')) {
-      div.classList.add('add');
-    }
-    div.textContent = line;
-    diffViewer.appendChild(div);
-  });
-
-  document.getElementById('fixExplanationText').textContent = data.explanation || 'Replaced direct unsafe execution with guarded implementation.';
-  
-  const sideEffects = data.sideEffects || 'None detected.';
-  const considerations = data.considerations ? ` ${data.considerations}` : '';
-  document.getElementById('fixSideEffectsText').textContent = sideEffects + considerations;
-}
-
 // ==========================================================================
-// 4. INTERACTIVE AI DEBUGGER CHAT
+// 2. INTERACTIVE AI DEBUGGER CHAT
 // ==========================================================================
 function initDebugChatModule() {
   const chatHistory = document.getElementById('chatHistory');
@@ -487,7 +437,7 @@ function initDebugChatModule() {
     // Append user bubble
     appendChatBubble('user', msg);
 
-    // AI thinking bubble placeholder
+    // AI thinking placeholder
     const thinkingId = 'thinking_' + Date.now();
     appendChatBubble('ai', 'Thinking & querying knowledge graph...', thinkingId);
 
@@ -506,7 +456,6 @@ function initDebugChatModule() {
       currentActiveSessionId = data.sessionId || currentActiveSessionId;
       document.getElementById('activeSessionIdText').textContent = currentActiveSessionId;
 
-      // Replace thinking placeholder
       const thinkingEl = document.getElementById(thinkingId);
       if (thinkingEl) {
         thinkingEl.querySelector('.bubble-content').textContent = data.reply || data.summary || 'Context received.';
@@ -542,13 +491,13 @@ function appendChatBubble(sender, text, customId = null) {
 }
 
 function escapeHtml(str) {
-  return str.replace(/[&<>'"]/g, 
+  return String(str).replace(/[&<>'"]/g, 
     tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
   );
 }
 
 // ==========================================================================
-// 5. BUG INGESTION FORM
+// 3. BUG INGESTION FORM
 // ==========================================================================
 function initIngestModule() {
   const form = document.getElementById('ingestBugForm');
@@ -593,20 +542,19 @@ function initIngestModule() {
 
       successMsg.textContent = `Recorded: [${bugId}] "${title}" (Severity: ${severity.toUpperCase()}, Component: ${component})`;
       successCard.hidden = false;
-      showToast(`Bug ${bugId} ingested successfully!`);
-      form.reset();
+      showToast(`Bug ${bugId} ingested into ledger!`);
     } catch (err) {
       showToast(`Ingestion failed: ${err.message}`, 'error');
     } finally {
       spinner.hidden = true;
-      btnText.textContent = '📥 Submit to BugGraph Ledger';
+      btnText.textContent = 'Submit to BugGraph Ledger';
       submitBtn.disabled = false;
     }
   });
 }
 
 // ==========================================================================
-// 6. SETTINGS & CONFIG
+// 4. SETTINGS & HEALTH MODULE
 // ==========================================================================
 function initSettingsModule() {
   const form = document.getElementById('configForm');
@@ -624,7 +572,7 @@ function initSettingsModule() {
         body: JSON.stringify({ endpoint, token: token || null })
       });
 
-      const data = await res.json();
+      await res.json();
       showToast('Configuration saved successfully!');
       fetchEngineStatus();
     } catch (err) {
@@ -651,8 +599,6 @@ function initSettingsModule() {
 document.addEventListener('DOMContentLoaded', () => {
   initNavigation();
   initSolveModule();
-  initExplainModule();
-  initFixModule();
   initDebugChatModule();
   initIngestModule();
   initSettingsModule();

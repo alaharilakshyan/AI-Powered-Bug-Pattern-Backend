@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BugGraph // Terminal Workstation Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="crt-enabled">
+  <!-- Scanline & CRT Glow Overlay -->
+  <div class="crt-overlay" id="crtOverlay"></div>
+
+  <div class="terminal-frame">
+    <!-- TOP TERMINAL CHROME BAR -->
+    <header class="chrome-bar">
+      <div class="window-controls">
+        <span class="control-dot close" title="Close"></span>
+        <span class="control-dot minimize" title="Minimize"></span>
+        <span class="control-dot maximize" title="Maximize"></span>
+        <span class="terminal-title">BUGGRAPH_OS // WORKSTATION_TERMINAL_PROTOTYPE_v1.0</span>
+      </div>
+
+      <div class="system-status-cluster">
+        <div class="status-indicator online" id="statusIndicator">
+          <span class="led-blink"></span>
+          <span class="status-label" id="statusLabel">LOCAL_ENGINE: ONLINE</span>
+        </div>
+
+        <div class="status-pill model-tag" id="activeModelTag">
+          <span class="icon">🤖</span>
+          <span id="headerModelLabel">ollama:qwen2.5-coder</span>
+        </div>
+
+        <div class="status-pill latency-tag" id="latencyTag">
+          <span class="icon">⚡</span>
+          <span id="headerLatencyLabel">12ms</span>
+        </div>
+
+        <button class="chrome-btn install-btn" id="installModalBtn" title="One-line Terminal Installation">
+          <span class="icon">⚡</span> INSTALL CLI
+        </button>
+
+        <button class="chrome-btn dock-btn active" id="sideDockBtn" title="Dock Aside Terminal (Side-by-side mode)">
+          <span class="icon">📌</span> DOCK ASIDE
+        </button>
+
+        <button class="chrome-btn" id="crtToggleBtn" title="Toggle CRT Scanline Effect">
+          <span class="icon">📺</span> CRT: ON
+        </button>
+
+        <button class="chrome-btn" id="proDockToggleBtn" title="Toggle Pro Developer Dock">
+          <span class="icon">🛠️</span> PRO DOCK
+        </button>
+      </div>
+    </header>
+
+    <!-- FUNCTION QUICK COMMAND BAR -->
+    <section class="quick-commands-bar">
+      <div class="fn-btn-group">
+        <button class="fn-btn active" data-cmd="solve" title="Analyze error, root cause, code patch and O(N) complexity">
+          <span class="fn-prefix">&gt;</span> solve
+        </button>
+        <button class="fn-btn" data-cmd="explain" title="Translate error into plain technical concepts">
+          <span class="fn-prefix">&gt;</span> explain
+        </button>
+        <button class="fn-btn" data-cmd="fix" title="Generate unified git patch diff">
+          <span class="fn-prefix">&gt;</span> fix
+        </button>
+        <button class="fn-btn" data-cmd="debug" title="Start interactive multi-turn debugging chat">
+          <span class="fn-prefix">&gt;</span> debug
+        </button>
+        <button class="fn-btn" data-cmd="tree" title="Graphic tree visual representation of error call stack & affected files">
+          <span class="fn-prefix">&gt;</span> tree
+        </button>
+        <button class="fn-btn" data-cmd="rules" title="View allowed flexibility vs security boundaries">
+          <span class="fn-prefix">&gt;</span> rules
+        </button>
+        <button class="fn-btn" data-cmd="install" title="Show one-line commands to install tool">
+          <span class="fn-prefix">&gt;</span> install
+        </button>
+        <button class="fn-btn" data-cmd="audit" title="View security status & audit log">
+          <span class="fn-prefix">&gt;</span> audit
+        </button>
+        <button class="fn-btn" data-cmd="pipe" title="Simulate piped log stream">
+          <span class="fn-prefix">&gt;</span> pipe
+        </button>
+        <button class="fn-btn" data-cmd="status" title="Check engine and backend connectivity">
+          <span class="fn-prefix">&gt;</span> status
+        </button>
+        <button class="fn-btn" data-cmd="clear" title="Clear terminal screen (Ctrl+L)">
+          <span class="fn-prefix">&gt;</span> clear
+        </button>
+      </div>
+
+      <div class="preset-chips-group">
+        <span class="preset-title">TRACE PRESETS:</span>
+        <button class="preset-chip" data-preset="typeerror">TypeError</button>
+        <button class="preset-chip" data-preset="sqli">SQL Injection</button>
+        <button class="preset-chip" data-preset="oom">Heap OOM</button>
+        <button class="preset-chip" data-preset="sensitive">Sensitive Keys</button>
+      </div>
+    </section>
+
+    <!-- MAIN TUI WORKSPACE: SPLIT PANE -->
+    <main class="tui-workspace">
+      <!-- LEFT PANE: TERMINAL REPL & STREAM CONSOLE -->
+      <section class="terminal-pane" id="terminalPane">
+        <!-- Scrollable Output Stream -->
+        <div class="terminal-stream" id="terminalStream">
+          <!-- ASCII Art & Welcome Message injected dynamically -->
+        </div>
+
+        <!-- Dynamic Drop Zone Notice -->
+        <div class="drop-hint" id="dropHint">
+          <span>📂 DROP .LOG OR .TXT STACK TRACE FILE HERE TO BUFFER</span>
+        </div>
+
+        <!-- Terminal Prompt Line -->
+        <div class="terminal-input-bar">
+          <div class="prompt-prefix">
+            <span class="p-user">dev</span><span class="p-at">@</span><span class="p-host">buggraph</span>
+            <span class="p-symbol">❯</span>
+          </div>
+
+          <div class="input-wrapper">
+            <textarea 
+              id="terminalInput" 
+              class="terminal-input" 
+              rows="1" 
+              placeholder="Type command ('solve', 'fix', 'debug', 'help') or paste trace..."
+              autofocus
+            ></textarea>
+            
+            <!-- Autocomplete Suggestions Popover -->
+            <div class="autocomplete-popover" id="autocompletePopover"></div>
+          </div>
+
+          <div class="input-actions">
+            <button id="multilineToggleBtn" class="action-btn" title="Toggle Expanded Multiline Buffer">
+              <span class="icon">⤢</span>
+            </button>
+            <button id="pasteTraceBtn" class="action-btn" title="Paste Clipboard Trace">
+              <span class="icon">📋</span> Paste
+            </button>
+            <button id="executeBtn" class="action-btn primary" title="Execute Command (Ctrl+Enter)">
+              <span class="icon">▶</span> RUN <kbd>Ctrl+↵</kbd>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESIZER SPLITTER -->
+      <div class="tui-splitter" id="tuiSplitter"></div>
+
+      <!-- RIGHT PANE: DEVELOPER PRO DOCK -->
+      <aside class="pro-dock-pane" id="proDockPane">
+        <div class="dock-header">
+          <div class="dock-title">
+            <span class="dock-icon">⚡</span>
+            <h3>DEVELOPER PRO DOCK</h3>
+          </div>
+          <span class="dock-badge">POWER USER HUD</span>
+        </div>
+
+        <div class="dock-content">
+          <!-- 1. LLM ENGINE SELECTOR -->
+          <div class="dock-card">
+            <div class="dock-card-header">
+              <span class="card-icon">🧠</span>
+              <h4>OFFLINE LLM MODEL PROVIDER</h4>
+            </div>
+            
+            <div class="provider-radio-group">
+              <label class="provider-radio active" data-provider="ollama">
+                <input type="radio" name="provider" value="ollama" checked>
+                <div class="radio-label">
+                  <span class="name">Local Ollama</span>
+                  <span class="url">127.0.0.1:11434</span>
+                </div>
+              </label>
+
+              <label class="provider-radio" data-provider="lmstudio">
+                <input type="radio" name="provider" value="lmstudio">
+                <div class="radio-label">
+                  <span class="name">LM Studio / vLLM</span>
+                  <span class="url">127.0.0.1:1234/v1</span>
+                </div>
+              </label>
+
+              <label class="provider-radio" data-provider="backend">
+                <input type="radio" name="provider" value="backend">
+                <div class="radio-label">
+                  <span class="name">Central Backend</span>
+                  <span class="url">127.0.0.1:3000 (Neo4j)</span>
+                </div>
+              </label>
+
+              <label class="provider-radio" data-provider="offline_heuristic">
+                <input type="radio" name="provider" value="offline_heuristic">
+                <div class="radio-label">
+                  <span class="name">Offline Heuristic</span>
+                  <span class="url">Zero-latency Rule AI</span>
+                </div>
+              </label>
+            </div>
+
+            <!-- Model Selection Row -->
+            <div class="model-select-row">
+              <div class="form-group flex-1">
+                <label for="modelSelect">Active Target Model</label>
+                <div class="select-with-btn">
+                  <select id="modelSelect" class="dock-select">
+                    <option value="qwen2.5-coder:7b">qwen2.5-coder:7b (Recommended)</option>
+                    <option value="deepseek-coder:6.7b">deepseek-coder:6.7b</option>
+                    <option value="llama3.2:latest">llama3.2:latest</option>
+                    <option value="codellama:7b">codellama:7b</option>
+                    <option value="custom">Custom Model Name...</option>
+                  </select>
+                  <button id="scanModelsBtn" class="dock-btn secondary" title="Scan Local Models">
+                    <span>🔄 Scan</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="provider-ping-row">
+              <button id="testConnectionBtn" class="dock-btn outline">
+                <span>⚡ Test Connection</span>
+              </button>
+              <span id="connectionFeedback" class="feedback-text checking">Checking provider...</span>
+            </div>
+          </div>
+
+          <!-- 2. INFERENCE HYPERPARAMETER DIALS -->
+          <div class="dock-card">
+            <div class="dock-card-header">
+              <span class="card-icon">🎛️</span>
+              <h4>INFERENCE HYPERPARAMETERS</h4>
+            </div>
+
+            <div class="slider-group">
+              <div class="slider-header">
+                <label for="tempSlider">Temperature (Creativity vs Determinism)</label>
+                <span class="slider-value" id="tempValue">0.2</span>
+              </div>
+              <input type="range" id="tempSlider" min="0.0" max="1.0" step="0.05" value="0.2" class="dock-slider">
+              <div class="slider-ticks">
+                <span>0.0 (Strict Code)</span>
+                <span>0.5</span>
+                <span>1.0 (Creative)</span>
+              </div>
+            </div>
+
+            <div class="slider-group">
+              <div class="slider-header">
+                <label for="tokenSlider">Max Output Tokens</label>
+                <span class="slider-value" id="tokenValue">2048</span>
+              </div>
+              <input type="range" id="tokenSlider" min="256" max="4096" step="256" value="2048" class="dock-slider">
+            </div>
+
+            <div class="form-group">
+              <label for="contextWindowSelect">Context Window Allocation</label>
+              <select id="contextWindowSelect" class="dock-select">
+                <option value="4096">4,096 Tokens (Fast / Low VRAM)</option>
+                <option value="8192" selected>8,192 Tokens (Balanced)</option>
+                <option value="16384">16,384 Tokens (Deep Stack Traces)</option>
+                <option value="32768">32,768 Tokens (Full Codebase Dump)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 3. REAL-TIME TELEMETRY METRICS -->
+          <div class="dock-card">
+            <div class="dock-card-header">
+              <span class="card-icon">📊</span>
+              <h4>LIVE INFERENCE TELEMETRY</h4>
+            </div>
+
+            <div class="telemetry-grid">
+              <div class="telemetry-cell">
+                <span class="telemetry-label">INFERENCE TIME</span>
+                <span class="telemetry-val" id="telemetryLatency">94 ms</span>
+              </div>
+              <div class="telemetry-cell">
+                <span class="telemetry-label">TOKEN SPEED</span>
+                <span class="telemetry-val" id="telemetryTokSpeed">48.2 tok/s</span>
+              </div>
+              <div class="telemetry-cell">
+                <span class="telemetry-label">TOKENS GENERATED</span>
+                <span class="telemetry-val" id="telemetryTokens">320 tok</span>
+              </div>
+              <div class="telemetry-cell">
+                <span class="telemetry-label">GRAPH CONFIDENCE</span>
+                <span class="telemetry-val green" id="telemetryConfidence">98.4%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. REGEX SECRET SANITIZER SHIELD -->
+          <div class="dock-card">
+            <div class="dock-card-header">
+              <span class="card-icon">🛡️</span>
+              <h4>SECRET SANITIZER &amp; REDACTION</h4>
+            </div>
+
+            <div class="sanitizer-toggle-row">
+              <label class="switch">
+                <input type="checkbox" id="sanitizerSwitch" checked>
+                <span class="slider round"></span>
+              </label>
+              <div class="switch-meta">
+                <span class="switch-title">Scrub API Keys &amp; Credentials</span>
+                <span class="switch-desc">Redacts AWS keys, JWTs, DB passwords before LLM</span>
+              </div>
+            </div>
+
+            <div class="sanitizer-stats-row">
+              <span class="badge-sanitized" id="sanitizedCountBadge">3 redaction patterns active</span>
+              <button id="testSanitizeBtn" class="dock-btn text-only">Test Redaction</button>
+            </div>
+          </div>
+
+          <!-- 5. RAW PROMPT & KG CONTEXT INSPECTOR -->
+          <div class="dock-card collapsible collapsed" id="promptInspectorCard">
+            <div class="dock-card-header clickable" id="toggleInspectorHeader">
+              <span class="card-icon">🔍</span>
+              <h4>PROMPT &amp; GRAPH INSPECTOR</h4>
+              <span class="toggle-arrow">▼</span>
+            </div>
+            <div class="inspector-body">
+              <p class="inspector-hint">Raw system prompt and Neo4j graph context sent to local model:</p>
+              <pre class="inspector-pre" id="rawPromptPreview">Waiting for execution...</pre>
+            </div>
+          </div>
+
+          <!-- 6. LATEST UNIFIED DIFF QUICK ACTIONS -->
+          <div class="dock-card">
+            <div class="dock-card-header">
+              <span class="card-icon">📦</span>
+              <h4>LATEST CODE FIX DIFF</h4>
+            </div>
+            <div class="diff-preview-box" id="latestDiffBox">
+              <span class="empty-diff-hint">Execute 'solve' or 'fix' to generate patch diff.</span>
+            </div>
+            <div class="diff-btn-row">
+              <button id="copyDiffBtn" class="dock-btn secondary" disabled>
+                <span>📋 Copy Diff</span>
+              </button>
+              <button id="applyPatchBtn" class="dock-btn primary" disabled>
+                <span>🚀 Apply Patch</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- STATUS BOTTOM FOOTER -->
+    <footer class="terminal-footer">
+      <div class="footer-left">
+        <span class="footer-chip">ROOT: /AI-Powered-Bug-Pattern-Backend</span>
+        <span class="footer-chip">PORT: 4568</span>
+        <span class="footer-chip">NODE: v18+</span>
+      </div>
+      <div class="footer-right">
+        <span class="footer-chip"><kbd>Ctrl+L</kbd> Clear</span>
+        <span class="footer-chip"><kbd>Ctrl+Enter</kbd> Execute</span>
+        <span class="footer-chip"><kbd>Tab</kbd> Autocomplete</span>
+        <span class="footer-chip"><kbd>↑ / ↓</kbd> History</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 🚨 SECURITY LOCKDOWN & SUSPENSION WARNING MODAL (24-HR LOCK)    -->
+  <!-- ============================================================== -->
+  <div class="security-lock-overlay hidden" id="securityLockOverlay">
+    <div class="security-lock-modal">
+      <div class="lock-header">
+        <div class="hazard-icon-wrapper">
+          <span class="hazard-glyph">⚠️</span>
+          <span class="hazard-pulse"></span>
+        </div>
+        <div class="lock-title-group">
+          <div class="lock-badge">CRITICAL TAMPER BREACH DETECTED</div>
+          <h2 class="lock-heading">TERMINAL ACTIVITY SUSPENDED</h2>
+          <p class="lock-sub">In accordance with BugGraph Workstation Security Protocols, your activity is locked for 24 hours.</p>
+        </div>
+      </div>
+
+      <div class="lockout-countdown-box">
+        <div class="countdown-label">LOCKOUT COOLDOWN REMAINING</div>
+        <div class="countdown-digits" id="lockoutTimerDisplay">23:59:59</div>
+        <div class="countdown-sub" id="lockoutUnlockTime">Unfreeze Date: Calculating...</div>
+      </div>
+
+      <div class="incident-details-card">
+        <div class="detail-row">
+          <span class="detail-label">INCIDENT ID:</span>
+          <span class="detail-value cyan" id="lockoutIncidentId">SEC-918231</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">VIOLATION TYPE:</span>
+          <span class="detail-value red" id="lockoutCategory">SECURITY_MEASURE_BYPASS</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">TRIGGER SAMPLE:</span>
+          <code class="detail-value mono" id="lockoutTriggerSample">bypass-security</code>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">POLICY ENFORCEMENT:</span>
+          <span class="detail-value yellow">Input blocked across all diagnostic pipelines and local engine.</span>
+        </div>
+      </div>
+
+      <div class="lock-policy-notice">
+        <p><strong>Security Notice:</strong> The BugGraph Prototype grants developers flexibility to test error traces, benchmarks, and offline models. However, direct attempts to circumvent security measures, extract environment secrets, bypass sanitizers, or execute destructive commands result in an immutable 24-hour terminal lockout.</p>
+      </div>
+
+      <!-- Developer Emergency Override Drawer -->
+      <div class="dev-override-drawer">
+        <button class="dev-override-toggle" id="devOverrideToggleBtn">
+          <span>🛠️ Developer Emergency Override (QA / Teammates)</span>
+          <span class="arrow">▼</span>
+        </button>
+        <div class="dev-override-form hidden" id="devOverrideForm">
+          <div class="override-input-row">
+            <input type="password" id="devOverrideInput" placeholder="Enter emergency developer override key..." class="override-input">
+            <button id="devOverrideSubmitBtn" class="override-btn">Clear Lockout</button>
+          </div>
+          <span class="override-feedback" id="devOverrideFeedback"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- ⚡ WEB INSTALLATION MODAL (CLEAN TOOL DISTRIBUTION)             -->
+  <!-- ============================================================== -->
+  <div class="install-modal-overlay hidden" id="installModalOverlay">
+    <div class="install-modal">
+      <div class="install-modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">⚡</span>
+          <h3>ONE-LINE TERMINAL INSTALLATION</h3>
+        </div>
+        <button class="modal-close-btn" id="closeInstallModalBtn">✕</button>
+      </div>
+
+      <p class="install-modal-desc">
+        Run the following command directly in your computer's terminal to install our actual BugGraph utility tool cleanly with zero dump or dupe files:
+      </p>
+
+      <div class="install-tab-group">
+        <button class="install-tab active" data-target="bash">Linux / macOS</button>
+        <button class="install-tab" data-target="ps1">Windows PowerShell</button>
+        <button class="install-tab" data-target="npm">Node.js / npm</button>
+      </div>
+
+      <div class="install-code-box">
+        <code id="installCommandText">curl -fsSL http://127.0.0.1:4568/install.sh | bash</code>
+        <button class="copy-install-btn" id="copyInstallCommandBtn">📋 Copy</button>
+      </div>
+
+      <div class="install-features-list">
+        <div class="feature-item">✔ Installs our actual tool binary into <code>~/.buggraph</code></div>
+        <div class="feature-item">✔ Symlinks executable <code>buggraph</code> to user PATH</div>
+        <div class="feature-item">✔ No duplicate or dump files left behind</div>
+        <div class="feature-item">✔ Works completely offline with zero-latency heuristics</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

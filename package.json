@@ -9,6 +9,9 @@
   },
   "scripts": {
     "start": "node bin/buggraph.js",
+    "shell": "node bin/buggraph.js shell",
+    "prototype": "node prototype/run.js",
+    "prototype:cli": "node prototype/cli.js",
     "test": "node --test tests/*.test.js"
   },
   "keywords": [

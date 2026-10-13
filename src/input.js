@@ -98,6 +98,18 @@ export async function readFileInput(filePath) {
  * 3. Interactive multiline copy/paste buffer (in TTY)
  */
 export async function resolveTraceInput({ options = {}, title = 'BugGraph Error Input' } = {}) {
+  if (options.trace) {
+    return String(options.trace).trim();
+  }
+
+  if (options.text) {
+    return String(options.text).trim();
+  }
+
+  if (options.input) {
+    return String(options.input).trim();
+  }
+
   if (options.file) {
     return await readFileInput(options.file);
   }

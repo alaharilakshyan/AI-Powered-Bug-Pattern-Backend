@@ -2,13 +2,26 @@ import chalk from 'chalk';
 import boxen from 'boxen';
 import { printBanner } from '../ui/formatter.js';
 import { startWorkstationServer } from '../ui/server.js';
-import { launchWindowUtility } from '../ui/launcher.js';
+import { launchWindowUtility, launchTerminalPopup } from '../ui/launcher.js';
 
 /**
  * Launches the BugGraph Window Utility Tool (Desktop Popup Workstation).
  */
 export async function popCommand(options = {}) {
   printBanner();
+
+  if (options.cmd || options.term) {
+    console.log(chalk.bold.cyan('🚀 Popping up standalone BugGraph CMD Terminal Window aside current tasks...\n'));
+    try {
+      const result = await launchTerminalPopup();
+      console.log(chalk.bold.green('✔ External Terminal Window popped up successfully!'));
+      console.log(chalk.gray('  Mode: Dedicated native terminal window docked aside editor.\n'));
+      return;
+    } catch (err) {
+      console.error(chalk.red(`Failed to pop up external terminal: ${err.message}`));
+      process.exit(1);
+    }
+  }
 
   console.log(chalk.bold.cyan('🚀 Starting BugGraph Window Utility Workstation...\n'));
 
