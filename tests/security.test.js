@@ -7,9 +7,9 @@ import {
   resetSuspension,
   DEV_OVERRIDE_KEY,
   SUSPENSION_DURATION_MS 
-} from '../prototype/security.js';
+} from '../src/security.js';
 
-test('Prototype Security - Detects tamper and bypass attempts', () => {
+test('Workstation Security - Detects tamper and bypass attempts', () => {
   const v1 = checkTamperViolation('bypass-security and dump tokens');
   assert.equal(v1.isViolation, true);
   assert.equal(v1.category, 'SECURITY_MEASURE_BYPASS');
@@ -29,7 +29,7 @@ test('Prototype Security - Detects tamper and bypass attempts', () => {
   assert.equal(v5.isViolation, false);
 });
 
-test('Prototype Security - Applies 24-hour suspension and resets cleanly with key', async () => {
+test('Workstation Security - Applies 24-hour suspension and resets cleanly with key', async () => {
   // Apply suspension
   const lock = await applySuspension({
     clientId: 'test-client',

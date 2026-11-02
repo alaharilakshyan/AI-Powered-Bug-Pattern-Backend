@@ -11,7 +11,7 @@ export async function popCommand(options = {}) {
   printBanner();
 
   if (options.cmd || options.term) {
-    console.log(chalk.bold.cyan('🚀 Popping up standalone BugGraph CMD Terminal Window aside current tasks...\n'));
+    console.log(chalk.bold.green('🚀 Popping up standalone BugGraph CMD Terminal Window aside current tasks...\n'));
     try {
       const result = await launchTerminalPopup();
       console.log(chalk.bold.green('✔ External Terminal Window popped up successfully!'));
@@ -23,7 +23,7 @@ export async function popCommand(options = {}) {
     }
   }
 
-  console.log(chalk.bold.cyan('🚀 Starting BugGraph Window Utility Workstation...\n'));
+  console.log(chalk.bold.green('🚀 Starting BugGraph Window Utility Workstation...\n'));
 
   try {
     const { server, port, url } = await startWorkstationServer({
@@ -34,7 +34,7 @@ export async function popCommand(options = {}) {
 
     const message = [
       `${chalk.bold.green('✔ BUGGRAPH WINDOW UTILITY TOOL ACTIVE')}\n`,
-      `${chalk.bold('Workstation URL')} : ${chalk.cyan.underline(url)}`,
+      `${chalk.bold('Workstation URL')} : ${chalk.green.underline(url)}`,
       `${chalk.bold('Launch Mode')    } : ${chalk.yellow(launchResult.mode === 'app-window' ? 'Dedicated Desktop Window' : 'System Browser Window')}`,
       `${chalk.bold('Engine Status')  } : ${chalk.green('Ready & Connected')}\n`,
       `${chalk.gray('The workstation is running outside the terminal in its own window.')}`,
@@ -43,7 +43,7 @@ export async function popCommand(options = {}) {
 
     console.log(boxen(message, {
       padding: 1,
-      borderColor: 'cyan',
+      borderColor: 'green',
       borderStyle: 'round'
     }));
 

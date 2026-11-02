@@ -262,7 +262,7 @@ async function runInteractiveMenu() {
       {
         type: 'list',
         name: 'action',
-        message: chalk.bold.cyan('Select Action:'),
+        message: chalk.bold.green('Select Action:'),
         pageSize: 15,
         choices: [
           { name: '🖥️   Launch Window Utility Tool (Pop up GUI Workstation)', value: 'pop' },

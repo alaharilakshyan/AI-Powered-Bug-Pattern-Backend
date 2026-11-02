@@ -28,7 +28,7 @@ if ([int]$nodeVersion -lt 18) {
 Write-Host "✔ Node.js runtime detected: $(node -v)" -ForegroundColor Green
 
 # 2. Determine host URL & paths
-$serverUrl = if ($env:BUGGRAPH_HOST) { $env:BUGGRAPH_HOST } else { "http://127.0.0.1:4568" }
+$serverUrl = if ($env:BUGGRAPH_HOST) { $env:BUGGRAPH_HOST } else { "http://127.0.0.1:4567" }
 $targetDir = Join-Path $HOME ".buggraph"
 $binDir = Join-Path $targetDir "bin"
 $tempArchive = Join-Path $env:TEMP "buggraph-clean-$((Get-Random)).tar.gz"

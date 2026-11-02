@@ -37,7 +37,7 @@ fi
 echo -e "${GREEN}✔ Node.js runtime detected: $(node -v)${NC}"
 
 # 2. Determine Server Base URL (Passed via env or default)
-SERVER_URL="${BUGGRAPH_HOST:-http://127.0.0.1:4568}"
+SERVER_URL="${BUGGRAPH_HOST:-http://127.0.0.1:4567}"
 TARGET_DIR="$HOME/.buggraph"
 BIN_DIR="$HOME/.local/bin"
 

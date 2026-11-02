@@ -10,12 +10,12 @@ export function printBanner() {
   // For narrow terminals (< 72 cols), use a compact clean header to prevent line-wrapping
   if (terminalCols < 72) {
     const compactHeader = 
-      `${chalk.bold.cyan('⚡ BUGGRAPH WORKSTATION v1.0.0')}\n` +
+      `${chalk.bold.green('⚡ BUGGRAPH WORKSTATION v1.0.0')}\n` +
       `${chalk.gray('AI-Powered Bug-Pattern Knowledge Graph Engine')}`;
     
     console.log(boxen(compactHeader, {
       padding: { top: 0, bottom: 0, left: 1, right: 1 },
-      borderColor: 'cyan',
+      borderColor: 'green',
       borderStyle: 'round'
     }));
     return;
@@ -32,13 +32,13 @@ export function printBanner() {
   ];
 
   const logo = 
-    bannerLines.map(line => chalk.bold.cyan(line)).join('\n') + '\n\n' +
+    bannerLines.map(line => chalk.bold.green(line)).join('\n') + '\n\n' +
     chalk.bold.yellow('   🤖 AI-Powered Bug-Pattern Knowledge Graph Workstation v1.0.0') + '\n' +
     chalk.gray('   Real-time Log Piping • Stack Trace Analysis • Automated Fix Patching');
 
   console.log(boxen(logo, {
     padding: { top: 0, bottom: 0, left: 1, right: 1 },
-    borderColor: 'cyan',
+    borderColor: 'green',
     borderStyle: 'round'
   }));
 }
@@ -65,7 +65,7 @@ export function formatSolveResponse(data) {
 
   // Summary & Root Cause Section
   sections.push(
-    `\n${chalk.bold.cyan('🔍 SUMMARY')}\n` +
+    `\n${chalk.bold.green('🔍 SUMMARY')}\n` +
     `${data.summary || 'No summary provided.'}\n`
   );
 
@@ -77,7 +77,7 @@ export function formatSolveResponse(data) {
   // Related Patterns
   if (data.relatedPatterns && data.relatedPatterns.length > 0) {
     sections.push(
-      `${chalk.bold.blue('🏷️ KNOWLEDGE GRAPH PATTERNS')}\n` +
+      `${chalk.bold.green('🏷️ KNOWLEDGE GRAPH PATTERNS')}\n` +
       data.relatedPatterns.map(p => `  • ${chalk.underline(p)}`).join('\n') + '\n'
     );
   }
@@ -105,7 +105,7 @@ export function formatSolveResponse(data) {
     const opt = data.optimization;
     sections.push(
       `${chalk.bold.yellow('⚡ OPTIMIZATION & COMPLEXITY')}\n` +
-      `  • ${chalk.bold('Complexity')}  : ${chalk.cyan(opt.complexity || 'O(1)')}\n` +
+      `  • ${chalk.bold('Complexity')}  : ${chalk.green(opt.complexity || 'O(1)')}\n` +
       `  • ${chalk.bold('Performance')} : ${opt.performance || 'N/A'}\n` +
       `  • ${chalk.bold('Security')}    : ${opt.security || 'N/A'}\n` +
       `  • ${chalk.bold('Safety')}      : ${opt.maintainability || 'N/A'}\n`
@@ -121,8 +121,8 @@ export function formatSolveResponse(data) {
 export function formatExplainResponse(data) {
   const sections = [];
 
-  const titleText = `${chalk.bold.cyan('📖 BUGGRAPH ERROR EXPLAINER')}`;
-  sections.push(boxen(titleText, { padding: { top: 0, bottom: 0, left: 1, right: 1 }, borderColor: 'cyan', borderStyle: 'round' }));
+  const titleText = `${chalk.bold.green('📖 BUGGRAPH ERROR EXPLAINER')}`;
+  sections.push(boxen(titleText, { padding: { top: 0, bottom: 0, left: 1, right: 1 }, borderColor: 'green', borderStyle: 'round' }));
 
   sections.push(
     `\n${chalk.bold.yellow('💡 Summary:')}\n${data.summary || data.meaning || 'No description available.'}\n`
@@ -130,7 +130,7 @@ export function formatExplainResponse(data) {
 
   if (data.meaning) {
     sections.push(
-      `${chalk.bold.blue('🧠 What This Means:')}\n${data.meaning}\n`
+      `${chalk.bold.green('🧠 What This Means:')}\n${data.meaning}\n`
     );
   }
 
@@ -149,7 +149,7 @@ export function formatExplainResponse(data) {
 
   if (data.nextSteps && data.nextSteps.length > 0) {
     sections.push(
-      `${chalk.bold.cyan('🚀 Recommended Next Steps:')}\n` +
+      `${chalk.bold.green('🚀 Recommended Next Steps:')}\n` +
       data.nextSteps.map((s, idx) => `  ${idx + 1}. ${s}`).join('\n') + '\n'
     );
   }
@@ -183,7 +183,7 @@ export function formatFixResponse(data) {
 
   if (data.explanation) {
     sections.push(
-      `${chalk.bold.cyan('💡 Why This Fix Works:')}\n${data.explanation}\n`
+      `${chalk.bold.green('💡 Why This Fix Works:')}\n${data.explanation}\n`
     );
   }
 

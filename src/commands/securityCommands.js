@@ -56,7 +56,7 @@ export async function resetSecurityCommand(options = {}) {
 }
 
 export function installCommand() {
-  const serverUrl = 'http://127.0.0.1:4568';
+  const serverUrl = 'http://127.0.0.1:4567';
   console.log(boxen([
     chalk.bold.hex('#00ff88')('⚡ ONE-LINE INSTANT CLI INSTALLATION COMMANDS'),
     '',

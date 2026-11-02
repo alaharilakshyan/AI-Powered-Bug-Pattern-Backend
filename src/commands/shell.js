@@ -88,10 +88,10 @@ export async function runShellCommand(rawLine) {
       console.log(boxen([
         chalk.bold.hex('#00ff88')('⚡ BUGGRAPH CLI WORKSTATION // COMMAND DIRECTORY'),
         '',
-        ...SHELL_COMMANDS.map(c => `  ${chalk.bold.cyan(c.cmd.padEnd(16))} : ${chalk.gray(c.desc)}`),
+        ...SHELL_COMMANDS.map(c => `  ${chalk.bold.green(c.cmd.padEnd(16))} : ${chalk.gray(c.desc)}`),
         '',
         chalk.yellow('Tip: You can pass error traces or files directly to any command.')
-      ].join('\n'), { padding: 1, borderColor: 'cyan' }));
+      ].join('\n'), { padding: 1, borderColor: 'green' }));
       return true;
     }
 
@@ -171,7 +171,7 @@ export async function runShellCommand(rawLine) {
 
 export async function startInteractiveShell() {
   printBanner();
-  console.log(chalk.bold.cyan('  ⚡ BUGGRAPH INTERACTIVE SHELL // CYBERPUNK HUD EDITION'));
+  console.log(chalk.bold.green('  ⚡ BUGGRAPH INTERACTIVE SHELL // CYBERPUNK HUD EDITION'));
   console.log(chalk.gray('  Type ') + chalk.bold.yellow('help') + chalk.gray(' for directory, ') + chalk.bold.yellow('rules') + chalk.gray(' for boundaries, ') + chalk.bold.yellow('pop') + chalk.gray(' for side-dock GUI, or ') + chalk.bold.yellow('exit') + chalk.gray(' to quit.\n'));
 
   const status = await isClientSuspended('cli');

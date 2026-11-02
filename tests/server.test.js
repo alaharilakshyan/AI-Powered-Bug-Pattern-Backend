@@ -98,4 +98,34 @@ test('Workstation Server - Starts and serves static files and APIs', async (t) =
   const fixData = JSON.parse(fixRes.body);
   assert.strictEqual(fixData.success, true);
   assert.ok(fixData.fixDiff);
+
+  // Test 8: POST /api/command (Universal Workstation command)
+  const cmdRes = await makeRequest(`${workstation.url}/api/command`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  }, {
+    command: 'solve',
+    trace: 'TypeError: Cannot read properties of undefined (reading "map")'
+  });
+  assert.strictEqual(cmdRes.statusCode, 200);
+  const cmdData = JSON.parse(cmdRes.body);
+  assert.strictEqual(cmdData.success, true);
+  assert.ok(cmdData.callTree);
+
+  // Test 9: GET /install.sh
+  const installRes = await makeRequest(`${workstation.url}/install.sh`);
+  assert.strictEqual(installRes.statusCode, 200);
+  assert.ok(installRes.body.includes('BUGGRAPH AI WORKSTATION CLI'));
+
+  // Test 10: POST /api/sanitize
+  const sanitizeRes = await makeRequest(`${workstation.url}/api/sanitize`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  }, {
+    text: 'API Key sk-abcdef1234567890abcdef1234567890'
+  });
+  assert.strictEqual(sanitizeRes.statusCode, 200);
+  const sanitizeData = JSON.parse(sanitizeRes.body);
+  assert.strictEqual(sanitizeData.modified, true);
+  assert.ok(sanitizeData.sanitized.includes('[REDACTED_SECRET]'));
 });

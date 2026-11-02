@@ -108,6 +108,9 @@ export function checkTamperViolation(rawInput) {
   return { isViolation: false };
 }
 
+// In-memory cache fallback to guarantee lock state persistence across restricted environments
+let memoryLocks = { locks: {} };
+
 /**
  * Reads the current security lockfile from disk.
  */
@@ -115,9 +118,10 @@ export async function getLockData() {
   const lockPath = getLockFilePath();
   try {
     const raw = await fs.readFile(lockPath, 'utf-8');
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return { ...memoryLocks, ...parsed, locks: { ...memoryLocks.locks, ...parsed.locks } };
   } catch {
-    return { locks: {} };
+    return memoryLocks;
   }
 }
 
@@ -125,12 +129,13 @@ export async function getLockData() {
  * Writes the security lockfile to disk.
  */
 export async function saveLockData(data) {
+  memoryLocks = data;
   const lockPath = getLockFilePath();
   try {
     await fs.mkdir(path.dirname(lockPath), { recursive: true });
     await fs.writeFile(lockPath, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (err) {
-    // Non-fatal fallback
+  } catch {
+    // Non-fatal fallback - memoryLocks maintains state
   }
 }
 
