@@ -53,6 +53,7 @@ program
   .command('pop')
   .description('Launch the dedicated BugGraph Window Utility Workstation GUI outside the terminal')
   .option('-p, --port <port>', 'Custom workstation server port', '4567')
+  .option('-d, --detach', 'Run workstation completely detached in background without holding terminal')
   .option('--cmd', 'Pop up native Windows CMD terminal window instead of browser HUD')
   .option('--term', 'Alias for --cmd')
   .action((options) => popCommand(options));

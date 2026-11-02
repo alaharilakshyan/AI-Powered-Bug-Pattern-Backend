@@ -8,15 +8,16 @@
 
 ### 1. Graphical Terminal Workstation HUD (Separated Window Mode)
 ```bash
-# Option 1: Via npm script
+# Option 1: Via npm script (Foreground)
 npm run pop
-# or
-npm run workstation
 
-# Option 2: Directly via node
-node bin/buggraph.js pop
+# Option 2: Detached Background Mode (Frees your terminal immediately!)
+node bin/buggraph.js pop --detach
+
+# Option 3: Double-click launch without opening any terminal at all:
+# Double-click launch-buggraph.vbs or launch-buggraph.bat in the project folder
 ```
-Starts the BugGraph workstation server at `http://127.0.0.1:4567` and automatically opens a dedicated standalone desktop HUD window docked comfortably beside your terminal (`1260x840`).
+Starts the BugGraph workstation server at `http://127.0.0.1:4567` and automatically opens a dedicated standalone desktop HUD window docked comfortably beside your terminal (`1260x840`). In detached mode (`--detach`), your terminal is freed immediately.
 
 ### 2. Standalone CLI & Cyberpunk REPL Shell
 ```bash

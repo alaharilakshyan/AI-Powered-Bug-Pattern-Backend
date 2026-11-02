@@ -791,3 +791,14 @@ export function startWorkstationServer({ port = 4567, host = '127.0.0.1' } = {})
     tryListen();
   });
 }
+
+// Direct execution support
+if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename)) {
+  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 4567;
+  startWorkstationServer({ port }).then(({ url }) => {
+    console.log(`BugGraph Workstation Server running at ${url}`);
+  }).catch((err) => {
+    console.error(`Failed to start server: ${err.message}`);
+    process.exit(1);
+  });
+}
