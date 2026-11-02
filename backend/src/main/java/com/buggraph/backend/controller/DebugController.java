@@ -1,5 +1,7 @@
 package com.buggraph.backend.controller;
 
+import com.buggraph.backend.model.BugEntity;
+import com.buggraph.backend.repository.BugRepository;
 import com.buggraph.backend.service.AiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -14,10 +16,27 @@ public class DebugController {
     @Autowired
     private AiService aiService;
 
+    @Autowired
+    private BugRepository bugRepository;
+
     @PostMapping("/solve")
     public Map<String, Object> solve(@RequestBody Map<String, Object> payload) {
         String errorSnippet = extractError(payload);
-        return aiService.analyzeError(errorSnippet);
+
+        // 1. Run AI analysis (or resilient fallback)
+        Map<String, Object> rawResult = aiService.analyzeError(errorSnippet);
+        Map<String, Object> response = new HashMap<>(rawResult);
+
+        // 2. Query Knowledge Graph pattern nodes from Database
+        try {
+            String keyword = errorSnippet.split("[\n:]")[0].trim();
+            List<BugEntity> matched = bugRepository.searchBugs(keyword);
+            response.put("matchedGraphNodes", matched != null ? matched.stream().limit(3).toList() : Collections.emptyList());
+        } catch (Exception ex) {
+            response.put("matchedGraphNodes", Collections.emptyList());
+        }
+
+        return response;
     }
 
     @PostMapping("/explain")
